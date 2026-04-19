@@ -16,33 +16,42 @@ Two scripts following the [ProxmoxVE Community Scripts](https://github.com/commu
 - **PHP 8.2** - With all required extensions (pgsql, redis, gd, intl, etc.)
 - **ImageMagick** - For image processing
 
-## Container Specifications
+## Container Specifications (Default)
 
 - **OS:** Debian 12
-- **CPU:** 2 cores
-- **RAM:** 2048 MB
-- **Disk:** 8 GB
+- **CPU:** 2 cores (customizable via advanced settings)
+- **RAM:** 2048 MB (customizable via advanced settings)
+- **Disk:** 8 GB (customizable via advanced settings)
 - **Type:** Unprivileged container
 - **Tags:** wiki, documentation
 
+**Note:** All resource values can be overridden using ProxmoxVE's advanced settings interface before container creation.
+
 ## Features
 
-✅ Automatic detection of latest MediaWiki version  
+✅ Automatic detection of latest MediaWiki version (fallback: 1.45.3)  
+✅ Advanced settings support for resource customization  
 ✅ Secure PostgreSQL setup with random password generation  
 ✅ Redis configured for session caching (256MB memory, LRU eviction)  
 ✅ Nginx optimized for MediaWiki with pretty URLs  
 ✅ PHP optimized for MediaWiki (256MB memory, 100MB uploads)  
 ✅ Database credentials saved to `/root/mediawiki.db`  
 ✅ Update script included for MediaWiki upgrades  
+✅ Error handling and validation for downloads  
 
 ## Usage
 
 ### On ProxmoxVE Host
 
 ```bash
-# Run the container creation script
-bash -c "$(wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/mediawiki.sh)"
+# Run the container creation script from your repository
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/dvazquezguzman/mediawiki/main/ct/mediawiki.sh)"
+
+# Or if submitted to ProxmoxVE community scripts:
+# bash -c "$(wget -qLO - https://github.com/community-scripts/ProxmoxVE/raw/main/ct/mediawiki.sh)"
 ```
+
+**Advanced Settings:** During container creation, you can customize CPU, RAM, and disk size through the ProxmoxVE UI's advanced settings panel.
 
 ### After Installation
 
