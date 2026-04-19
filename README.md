@@ -38,6 +38,10 @@ Two scripts following the [ProxmoxVE Community Scripts](https://github.com/commu
 ✅ Database credentials saved to `/root/mediawiki.db`  
 ✅ Update script included for MediaWiki upgrades  
 ✅ Error handling and validation for downloads  
+✅ **Security hardened upload directory** (prevents script execution)  
+✅ **Security headers** (X-Content-Type-Options, X-Frame-Options, XSS Protection)  
+✅ **.htaccess protection** for images directory  
+✅ **Blocks sensitive file access** (.sql, .log, .conf files)  
 
 ## Usage
 
@@ -99,13 +103,27 @@ mediawiki
 - **Database credentials:** `/root/mediawiki.db`
 - **MediaWiki version:** `/root/mediawiki.version`
 
-## Security Notes
+## Security Features
 
-- PostgreSQL is configured for local connections only
-- Redis listens on localhost only
-- Default Nginx configuration includes security headers
-- Random password generated for database user
-- Maintenance directory blocked from web access
+The installation includes multiple security layers to protect against common vulnerabilities:
+
+### Upload Directory Protection
+- **Script execution blocked** - PHP, Python, Perl, and other scripts cannot execute in `/images/`
+- **File type whitelist** - Only image files (gif, png, jpg, jpeg, webp, svg, ico) are allowed
+- **Nginx location rules** - Prevents direct access to uploaded scripts
+- **.htaccess backup** - Secondary protection layer for Apache compatibility
+
+### HTTP Security Headers
+- **X-Content-Type-Options: nosniff** - Prevents MIME type sniffing attacks
+- **X-Frame-Options: SAMEORIGIN** - Protects against clickjacking
+- **X-XSS-Protection: 1; mode=block** - Enables browser XSS filtering
+
+### File Access Restrictions
+- **Sensitive file blocking** - `.sql`, `.log`, `.conf`, `.ini`, `.bak` files blocked
+- **Maintenance directory** - Returns 403 Forbidden
+- **Hidden files** - `.ht*` files (like .htaccess, .htpasswd) blocked
+
+These security measures address the warnings shown during MediaWiki installation and exceed the minimum security requirements.
 
 ## Nginx Configuration
 
