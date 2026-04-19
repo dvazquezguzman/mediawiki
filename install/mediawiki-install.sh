@@ -92,12 +92,22 @@ msg_ok "Installed Redis"
 msg_info "Installing MediaWiki"
 RELEASE=$(curl -s https://www.mediawiki.org/wiki/Download | grep -oP 'MediaWiki \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 if [ -z "$RELEASE" ]; then
-  RELEASE="1.43.0"  # Fallback to stable version
+  RELEASE="1.45.3"  # Fallback to stable version
+  msg_info "Using fallback version ${RELEASE}"
 fi
 
 cd /tmp
+msg_info "Downloading MediaWiki ${RELEASE}"
 wget -q https://releases.wikimedia.org/mediawiki/${RELEASE%.*}/mediawiki-${RELEASE}.tar.gz
+if [ $? -ne 0 ]; then
+  msg_error "Failed to download MediaWiki ${RELEASE}"
+  exit 1
+fi
 tar -xzf mediawiki-${RELEASE}.tar.gz
+if [ ! -d "mediawiki-${RELEASE}" ]; then
+  msg_error "Failed to extract MediaWiki archive"
+  exit 1
+fi
 mkdir -p /var/www
 mv mediawiki-${RELEASE} /var/www/mediawiki
 rm mediawiki-${RELEASE}.tar.gz

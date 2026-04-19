@@ -7,13 +7,13 @@ source <(curl -s https://raw.githubusercontent.com/community-scripts/ProxmoxVE/m
 
 # App Default Values
 APP="MediaWiki"
-var_tags="wiki;documentation"
-var_cpu="2"
-var_ram="2048"
-var_disk="8"
-var_os="debian"
-var_version="12"
-var_unprivileged="1"
+var_tags="${var_tags:-wiki;documentation}"
+var_cpu="${var_cpu:-2}"
+var_ram="${var_ram:-2048}"
+var_disk="${var_disk:-8}"
+var_os="${var_os:-debian}"
+var_version="${var_version:-12}"
+var_unprivileged="${var_unprivileged:-1}"
 
 # App Output & Base Settings
 header_info "$APP"
@@ -34,9 +34,17 @@ function update_script() {
     exit
   fi
   RELEASE=$(curl -s https://www.mediawiki.org/wiki/Download | grep -oP 'MediaWiki \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if [ -z "$RELEASE" ]; then
+    msg_error "Failed to detect MediaWiki version"
+    exit 1
+  fi
   msg_info "Updating ${APP} to ${RELEASE}"
-  cd /var/www/mediawiki
+  cd /var/www/mediawiki || exit
   wget -q https://releases.wikimedia.org/mediawiki/${RELEASE%.*}/mediawiki-${RELEASE}.tar.gz
+  if [ $? -ne 0 ]; then
+    msg_error "Failed to download MediaWiki ${RELEASE}"
+    exit 1
+  fi
   tar -xzf mediawiki-${RELEASE}.tar.gz --strip-components=1
   rm mediawiki-${RELEASE}.tar.gz
   chown -R www-data:www-data /var/www/mediawiki
@@ -55,5 +63,7 @@ description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}${CL}"
+echo -e "${INFO}${YW} Access the MediaWiki installer at:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}http://${IP}/mw-config/index.php${CL}"
+echo -e "${INFO}${YW} Database credentials are saved in:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}/root/mediawiki.db${CL}"
