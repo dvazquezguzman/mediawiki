@@ -127,12 +127,32 @@ server {
 
     client_max_body_size 100M;
 
+    # Security headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
     location / {
         try_files $uri $uri/ @rewrite;
     }
 
     location @rewrite {
         rewrite ^/(.*)$ /index.php?title=$1&$args;
+    }
+
+    # Block direct access to images directory (except through MediaWiki)
+    location ^~ /images/ {
+        # Prevent execution of PHP and other scripts
+        location ~ \.(php|php5|phtml|pl|py|jsp|asp|sh|cgi)$ {
+            deny all;
+        }
+        # Allow only specific image file types
+        location ~* \.(gif|png|jpg|jpeg|webp|svg|ico)$ {
+            add_header X-Content-Type-Options "nosniff" always;
+            try_files $uri =404;
+        }
+        # Deny everything else
+        deny all;
     }
 
     location ^~ /maintenance/ {
@@ -149,9 +169,15 @@ server {
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires max;
         log_not_found off;
+        add_header X-Content-Type-Options "nosniff" always;
     }
 
     location ~ /\.ht {
+        deny all;
+    }
+
+    # Block access to sensitive files
+    location ~* \.(sql|log|conf|ini|bak|old)$ {
         deny all;
     }
 }
@@ -162,6 +188,29 @@ rm -f /etc/nginx/sites-enabled/default
 $STD nginx -t
 systemctl reload nginx
 msg_ok "Configured Nginx"
+
+msg_info "Securing images directory"
+# Create .htaccess file to prevent script execution in images directory
+cat <<'HTACCESS' >/var/www/mediawiki/images/.htaccess
+# Prevent execution of PHP and other scripts
+<FilesMatch "\.(php|php5|phtml|pl|py|jsp|asp|sh|cgi|exe)$">
+    Require all denied
+</FilesMatch>
+
+# Only allow image files
+<FilesMatch "\.(gif|png|jpg|jpeg|webp|svg|ico)$">
+    Require all granted
+</FilesMatch>
+
+# Deny access to everything else
+<RequireAll>
+    Require all denied
+</RequireAll>
+HTACCESS
+
+chown www-data:www-data /var/www/mediawiki/images/.htaccess
+chmod 644 /var/www/mediawiki/images/.htaccess
+msg_ok "Secured images directory"
 
 msg_info "Configuring PHP"
 # Optimize PHP for MediaWiki
